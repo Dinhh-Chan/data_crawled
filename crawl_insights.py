@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import json 
 import time
+from datetime import datetime
 
 URL = "https://www.iso.org/insights"
 BASE_URL= "https://www.iso.org"
@@ -67,16 +68,31 @@ def crawl_infor(sub_res):
             abstract = abstract_tag.text.strip() if abstract_tag else "No abstract available"
             
             content_section = soup.find("div", id="newsBody")
-            content_data = content_section.text.strip() if content_section else "No content available"
-            
+            if content_section :
+
+                content_section = content_section.text.strip() 
+            elif soup.find("div", itemprop = "articleBody"):
+                content_section = soup.find("div", itemprop = "articleBody").text.strip()
+            else :
+                content_section ="No published day"
+
+            date = soup.find('meta', attrs={'name': 'pubdate'})
+            if date :
+                date = date.get("content")
+            else :
+                date = "none"
+            pubdate = datetime.strptime(date, '%Y%m%d')
+    
+            formatted_pubdate = pubdate.strftime('%B %d, %Y') 
             result = {
                 "tag": tag,
                 "link": link, 
                 "title": title,
-                "published_day": "Not specified",
+                "published_day": formatted_pubdate,
                 "abstract": abstract,
-                "content": content_data
+                "content": content_section
             }
+            print(result)
             all_results.append(result)
             
             # Add a delay to avoid overwhelming the server
